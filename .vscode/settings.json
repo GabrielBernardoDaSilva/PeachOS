@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "kernel.h": "c",
-        "io.h": "c"
+        "io.h": "c",
+        "heap.h": "c",
+        "kheap.h": "c"
     }
 }
