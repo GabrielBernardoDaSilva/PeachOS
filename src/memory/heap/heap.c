@@ -7,20 +7,20 @@
 static int heap_validate_table(void* ptr, void *end, struct heap_table* table)
 {
     int res = 0;
-    size_t table_size = (size_t)(end- ptr);
+    size_t table_size = (size_t)(end - ptr);
     size_t total_blocks = table_size / PEACHOS_HEAP_BLOCK_SIZE; 
 
     if(table->total != total_blocks)
     {
-        res -=EINVARG;
+        res = -EINVARG;
         goto out;
     }
 
 out: 
-    return 0;
+    return res;
 }
 
-static bool heap_validates_aligment(void *ptr)
+static bool heap_validate_alignment(void *ptr)
 {
     return ((unsigned int)ptr % PEACHOS_HEAP_BLOCK_SIZE) == 0;
 }
@@ -29,7 +29,7 @@ static bool heap_validates_aligment(void *ptr)
 int heap_create(struct heap* heap, void* ptr, void* end, struct heap_table* table)
 {
     int res = 0;
-    if (!heap_validates_aligment(ptr) || !heap_validates_aligment(end)){
+    if (!heap_validate_alignment(ptr) || !heap_validate_alignment(end)){
         res = -EINVARG;
         goto out;  
     }
@@ -52,7 +52,7 @@ out:
 
 static uint32_t heap_align_value_to_upper(uint32_t val){
     if ((val % PEACHOS_HEAP_BLOCK_SIZE) == 0)
-        return 0;
+        return val;
     val = (val - (val % PEACHOS_HEAP_BLOCK_SIZE));
     val += PEACHOS_HEAP_BLOCK_SIZE;
     return val;
@@ -109,7 +109,7 @@ void heap_mark_blocks_taken(struct heap* heap, int start_block, int total_blocks
     {
         heap->table->entries[i] = entry;
         entry = HEAP_BLOCK_TABLE_ENTRY_TAKEN;
-        if (total_blocks > 1)
+        if (i != end_block - 1)
             entry |= HEAP_BLOCK_HAS_NEXT;
     }
 }

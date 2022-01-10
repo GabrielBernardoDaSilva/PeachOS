@@ -8,4 +8,4 @@ export PATH="$PREFIX/bin:$PATH"
 
 make all
 
-qemu-system-x86_64 -hda ./bin/os.bin
+qemu-system-i386 -hda ./bin/os.bin
