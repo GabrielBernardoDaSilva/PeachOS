@@ -1,4 +1,6 @@
 #pragma once
+#include "fs/file.h"
+
 //represents real physical disk
 #define PEACHOS_DISK_TYPE_REAL 0
 
@@ -7,6 +9,8 @@ struct disk
 {
     PEACHOS_DISK_TYPE type;
     int sector_size; 
+
+    struct filesystem* filesystem;
 };
 
 struct disk* disk_get(int index);
