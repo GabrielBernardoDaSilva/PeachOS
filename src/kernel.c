@@ -9,6 +9,7 @@
 #include "disk/disk.h"
 #include "fs/pparser.h"
 #include "disk/streamer.h"
+#include "fs/file.h"
 
 
 uint16_t* video_mem = 0;
@@ -72,6 +73,9 @@ void kernel_main()
 
     // Initialize the heap
     kheap_init();
+
+    // Initialize fs system
+    fs_init();
 
     // Search and initialize disk
     disk_search_and_init();

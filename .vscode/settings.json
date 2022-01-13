@@ -4,6 +4,8 @@
         "io.h": "c",
         "heap.h": "c",
         "kheap.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "string.h": "c",
+        "stdbool.h": "c"
     }
 }

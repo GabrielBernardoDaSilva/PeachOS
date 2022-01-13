@@ -9,8 +9,11 @@ struct disk
 {
     PEACHOS_DISK_TYPE type;
     int sector_size; 
-
+    //the disk id
+    int id;
     struct filesystem* filesystem;
+    //private data of our filesystem
+    void* fs_private;
 };
 
 struct disk* disk_get(int index);
