@@ -6,6 +6,7 @@
         "kheap.h": "c",
         "memory.h": "c",
         "string.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "status.h": "c"
     }
 }
