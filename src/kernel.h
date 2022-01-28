@@ -10,4 +10,5 @@
 #define ISERR(value) ((int)value) < 0
 
 void kernel_main();
+void panic(const char* msg);
 void print(const char* str);
