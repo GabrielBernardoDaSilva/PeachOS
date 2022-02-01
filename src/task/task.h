@@ -1,7 +1,7 @@
 #pragma once
 
 #include "config.h"
-#include "paging/paging.h"
+#include "memory/paging/paging.h"
 
 struct registers
 {
@@ -22,5 +22,18 @@ struct registers
 
 struct task
 {
+    //the page directory of the task
     struct paging_4gb_chunk* page_directory;
+    //the registers of the task when the task is not running
+    struct registers registers;
+    //next task on the link list
+    struct task* next;
+    //previous task
+    struct task* previous;
 };
+
+struct task* task_new();
+struct task* task_current();
+struct task* task_get_next();
+int task_free(struct task* task);
+
