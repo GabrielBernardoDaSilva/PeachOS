@@ -20,19 +20,23 @@ struct registers
     uint32_t ss;
 };
 
+struct process;
+
 struct task
 {
-    //the page directory of the task
+    // the page directory of the task
     struct paging_4gb_chunk* page_directory;
-    //the registers of the task when the task is not running
+    // the registers of the task when the task is not running
     struct registers registers;
-    //next task on the link list
+    // the process of the task
+    struct process* process;
+    // next task on the link list
     struct task* next;
-    //previous task
+    // previous task
     struct task* previous;
 };
 
-struct task* task_new();
+struct task* task_new(struct process* process);
 struct task* task_current();
 struct task* task_get_next();
 int task_free(struct task* task);

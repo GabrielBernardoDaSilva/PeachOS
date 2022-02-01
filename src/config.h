@@ -11,8 +11,10 @@
 
 
 #define PEACHOS_SECTOR_SIZE                             512
+
 #define PEACHOS_MAX_FILESYSTEMS                         12
 #define PEACHOS_MAX_FILE_DESCRIPTOR                     512
+#define PEACHOS_MAX_PATH                                108
 
 #define PEACHOS_TOTAL_GDT_SEGMENTS                      6
 
@@ -21,6 +23,8 @@
 #define PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_START     0x3ff00
 #define PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END       PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_START - PEACHOS_USER_PROGRAM_STACK_SIZE
 
+#define PEACHOS_MAX_PROGRAM_ALLOCATION                  1024
 #define USER_DATA_SEGMENT                               0x23
 #define USER_CODE_SEGMENT                               0x1b
+#define PEACHOS_MAX_PROCESSES                           12
 
