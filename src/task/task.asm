@@ -17,6 +17,7 @@ restore_general_purpose_registers:
     mov ecx, [ebx+20]
     mov eax, [ebx+24]
     mov ebx, [ebx+12]
+    pop ebp
     ret
 
 task_return:
@@ -49,7 +50,7 @@ task_return:
     mov fs, ax
     mov gs, ax
 
-    push dword [ebx+4]
+    push dword [ebp+4]
     call restore_general_purpose_registers
     add esp, 4
     ; lets leave kernel land and execute user land
