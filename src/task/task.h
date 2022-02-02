@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "memory/paging/paging.h"
+#include "idt/idt.h"
 
 struct registers
 {
@@ -25,26 +26,27 @@ struct process;
 struct task
 {
     // the page directory of the task
-    struct paging_4gb_chunk* page_directory;
+    struct paging_4gb_chunk *page_directory;
     // the registers of the task when the task is not running
     struct registers registers;
     // the process of the task
-    struct process* process;
+    struct process *process;
     // next task on the link list
-    struct task* next;
+    struct task *next;
     // previous task
-    struct task* previous;
+    struct task *previous;
 };
 
-struct task* task_new(struct process* process);
-struct task* task_current();
-struct task* task_get_next();
-int task_free(struct task* task);
-int task_switch(struct task* task);
+struct task *task_new(struct process *process);
+struct task *task_current();
+struct task *task_get_next();
+int task_free(struct task *task);
+int task_switch(struct task *task);
+int task_page();
 
 void task_run_first_ever_task();
+void task_current_save_state_frame(struct interrupt_frame *frame);
 
-void restore_general_purpose_registers(struct registers* regs);
-void task_return(struct registers* regs);
+void restore_general_purpose_registers(struct registers *regs);
+void task_return(struct registers *regs);
 void user_registers();
-
