@@ -7,51 +7,42 @@ DATA_SEG equ gdt_data - gdt_start
 jmp short start
 nop
 
+; FAT16 Header
+OEMIdentifier           db 'PEACHOS '
+BytesPerSector          dw 0x200
+SectorsPerCluster       db 0x80
+ReservedSectors         dw 200
+FATCopies               db 0x02
+RootDirEntries          dw 0x40
+NumSectors              dw 0x00
+MediaType               db 0xF8
+SectorsPerFat           dw 0x100
+SectorsPerTrack         dw 0x20
+NumberOfHeads           dw 0x40
+HiddenSectors           dd 0x00
+SectorsBig              dd 0x773594
 
-
-;FAT16 header
-
-OEMIdentifier                       db 'PEACHOS '
-BytesPerSector                      dw 0x200
-SectorPerCluster                    db 0x80
-ReservedSector                      dw 200
-FATCopies                           db 0x02
-RootDirEntries                      dw 0x40
-NumSectors                          dw 0x00
-MediaTypes                          db 0xf8
-SectorsPerFat                       dw 0x100
-SectorsPerTrack                     dw 0x20
-NumberOfHeads                       dw 0x40
-HiddenSectors                       dd 0x00
-SectorsBig                          dd 0x773594
-
-
-
-;Extended BPB (DOS 4.0)
-
-DriveNumber                         db 0x80
-WinNTBit                            db 0x00
-Signature                           db 0x29
-VolumeID                            dd 0xd105
-VolumeIDString                      db 'PEACHOS BOO'
-SystemIDString                      db 'FAT16   '
-
-
-
+; Extended BPB (Dos 4.0)
+DriveNumber             db 0x80
+WinNTBit                db 0x00
+Signature               db 0x29
+VolumeID                dd 0xD105
+VolumeIDString          db 'PEACHOS BOO'
+SystemIDString          db 'FAT16   '
 
 
 start:
-    jmp 0x0: step2
+    jmp 0:step2
 
-step2: 
-    cli                             ;clear interrupts
+step2:
+    cli ; Clear Interrupts
     mov ax, 0x00
     mov ds, ax
     mov es, ax
-    mov ss, ax                      ;mov ax value to stack segmentation 
-    mov sp, 0x7c00                  ;init stack pointer register
-    sti                             ;enable interrupts
-                                    
+    mov ss, ax
+    mov sp, 0x7c00
+    sti ; Enables Interrupts
+
 .load_protected:
     cli
     lgdt[gdt_descriptor]
@@ -59,92 +50,103 @@ step2:
     or eax, 0x1
     mov cr0, eax
     jmp CODE_SEG:load32
-
-                                    ;GDT
+    
+; GDT
 gdt_start:
 gdt_null:
     dd 0x0
     dd 0x0
-                                    ;offset 0x8
-gdt_code:                           ;cs should point to this
-    dw 0xffff                       ;Segement limit first 0-15 bits 
-    dw 0x0                          ;base first 0-15 bits
-    db 0x0                          ;base 16-23 bits
-    db 0x9a                         ;access byte
-    db 11001111b                    ;high 4 bit flags and low 4 bit flags
-    db 0x0                          ;base 24-31
-                                    ;offset 0x10
-gdt_data:
-    dw 0xffff                       ;Segement limit first 0-15 bits 
-    dw 0x0                          ;base first 0-15 bits
-    db 0x0                          ;base 16-23 bits
-    db 0x92                         ;access byte
-    db 11001111b                    ;high 4 bit flags and low 4 bit flags
-    db 0x0                          ;base 24-31
+
+; offset 0x8
+gdt_code:     ; CS SHOULD POINT TO THIS
+    dw 0xffff ; Segment limit first 0-15 bits
+    dw 0      ; Base first 0-15 bits
+    db 0      ; Base 16-23 bits
+    db 0x9a   ; Access byte
+    db 11001111b ; High 4 bit flags and the low 4 bit flags
+    db 0        ; Base 24-31 bits
+
+; offset 0x10
+gdt_data:      ; DS, SS, ES, FS, GS
+    dw 0xffff ; Segment limit first 0-15 bits
+    dw 0      ; Base first 0-15 bits
+    db 0      ; Base 16-23 bits
+    db 0x92   ; Access byte
+    db 11001111b ; High 4 bit flags and the low 4 bit flags
+    db 0        ; Base 24-31 bits
 
 gdt_end:
 
 gdt_descriptor:
-    dw gdt_end - gdt_start - 1
+    dw gdt_end - gdt_start-1
     dd gdt_start
-
-[BITS 32]
-load32:
-    mov eax, 0x01
-    mov ecx, 0x64
+ 
+ [BITS 32]
+ load32:
+    mov eax, 1
+    mov ecx, 100
     mov edi, 0x0100000
-    call ata_lbl_read
-    jmp CODE_SEG: 0x0100000
+    call ata_lba_read
+    jmp CODE_SEG:0x0100000
 
-ata_lbl_read:
-    mov ebx, eax                    ;backup the lba
-    shr eax, 24                     ;send the highest 8 bits of lba to hard disk controller shr => bitwise right 24 bits of 32 result only left 8 bits
-    or eax, 0xe0                    ;select master driver
-    mov dx, 0x1f6
-    out dx, al                      ;finished sending highest 8 bits of the lba
+ata_lba_read:
+    mov ebx, eax, ; Backup the LBA
+    ; Send the highest 8 bits of the lba to hard disk controller
+    shr eax, 24
+    or eax, 0xE0 ; Select the  master drive
+    mov dx, 0x1F6
+    out dx, al
+    ; Finished sending the highest 8 bits of the lba
 
+    ; Send the total sectors to read
+    mov eax, ecx
+    mov dx, 0x1F2
+    out dx, al
+    ; Finished sending the total sectors to read
 
-    mov eax, ecx                    ;send total sectors to read
-    mov dx, 0x1f2
-    out dx, al                      ;finish sending total sectors to read
+    ; Send more bits of the LBA
+    mov eax, ebx ; Restore the backup LBA
+    mov dx, 0x1F3
+    out dx, al
+    ; Finished sending more bits of the LBA
 
-    mov eax, ebx                    ;restore the backup lba
-    mov dx, 0x1f3
-    out dx, al                      ;finished sending more bits to lba
-
-    mov dx, 0x1f4                   ;sending more bits of the lba
-    mov eax, ebx                    ;restore the backup lba
+    ; Send more bits of the LBA
+    mov dx, 0x1F4
+    mov eax, ebx ; Restore the backup LBA
     shr eax, 8
-    out dx, al                      ;finished sending more bits to lba
+    out dx, al
+    ; Finished sending more bits of the LBA
 
-    mov dx, 0x1f5                   ;send upper 16bits to lba
-    mov eax, ebx
+    ; Send upper 16 bits of the LBA
+    mov dx, 0x1F5
+    mov eax, ebx ; Restore the backup LBA
     shr eax, 16
-    out dx, al                      ;finished sending upper 16bits to lba
+    out dx, al
+    ; Finished sending upper 16 bits of the LBA
 
     mov dx, 0x1f7
     mov al, 0x20
     out dx, al
 
-.next_sector:                       ;read all sctors
+    ; Read all sectors into memory
+.next_sector:
     push ecx
 
-.try_again:                         ;checkin if we need to read again
+; Checking if we need to read
+.try_again:
     mov dx, 0x1f7
     in al, dx
     test al, 8
-    jz .try_again   
-                                    ;we need to read 256 words
+    jz .try_again
+
+; We need to read 256 words at a time
     mov ecx, 256
-    mov dx, 0x1f0
+    mov dx, 0x1F0
     rep insw
     pop ecx
     loop .next_sector
-                                    ;ending reading sectors
-    ret 
-
-
+    ; End of reading sectors into memory
+    ret
 
 times 510-($ - $$) db 0
-dw 0xAA55 
-
+dw 0xAA55

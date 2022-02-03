@@ -1,11 +1,12 @@
-#pragma once
-#include "stdint.h"
+#ifndef TASKSWITCHSEGMENT_H
+#define TASKSWITCHSEGMENT_H
 
+#include <stdint.h>
 struct tss
 {
     uint32_t link;
-    uint32_t esp0;              //Kernel stack pointer
-    uint32_t ss0;               //Kernel stack segement
+    uint32_t esp0; // Kernel stack pointer
+    uint32_t ss0; // Kernel stack segment
     uint32_t esp1;
     uint32_t esp2;
     uint32_t ss2;
@@ -22,11 +23,13 @@ struct tss
     uint32_t edi;
     uint32_t es;
     uint32_t cs;
+    uint32_t ss;
     uint32_t ds;
     uint32_t fs;
     uint32_t gs;
     uint32_t ldtr;
     uint32_t iopb;
-}__attribute__((packed));
+} __attribute__((packed));
 
-void tss_load(int tss_segement);
+void tss_load(int tss_segment);
+#endif

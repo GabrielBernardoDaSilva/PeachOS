@@ -1,12 +1,11 @@
 [BITS 32]
 
-
 global _start
 global kernel_registers
-
 extern kernel_main
-CODE_SEG  equ 0x08
-DATA_SEG  equ 0x10
+
+CODE_SEG equ 0x08
+DATA_SEG equ 0x10
 
 _start:
     mov ax, DATA_SEG
@@ -17,7 +16,8 @@ _start:
     mov ss, ax
     mov ebp, 0x00200000
     mov esp, ebp
-                                    ;enable a20 line
+
+    ; Enable the A20 line
     in al, 0x92
     or al, 2
     out 0x92, al
@@ -34,6 +34,7 @@ _start:
     ; End remap of the master PIC
 
     call kernel_main
+
     jmp $
 
 kernel_registers:
@@ -43,5 +44,6 @@ kernel_registers:
     mov gs, ax
     mov fs, ax
     ret
+
 
 times 512-($ - $$) db 0
