@@ -15,6 +15,7 @@
 #include "disk/streamer.h"
 #include "task/tss.h"
 #include "gdt/gdt.h"
+#include "keyboard/keyboard.h"
 #include "config.h"
 #include "status.h"
 
@@ -140,6 +141,9 @@ void kernel_main()
 
     // Register the kernel commands
     isr80h_register_commands();
+
+    // Initialize all the systems keyboard
+    keyboard_init();
 
     struct process* process = 0;
     int res = process_load("0:/blank.bin", &process);
