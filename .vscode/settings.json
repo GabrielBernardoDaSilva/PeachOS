@@ -10,7 +10,8 @@
         "status.h": "c",
         "keyboard.h": "c",
         "process.h": "c",
-        "task.h": "c"
+        "task.h": "c",
+        "classic.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
