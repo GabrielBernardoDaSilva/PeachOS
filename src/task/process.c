@@ -10,21 +10,21 @@
 #include "kernel.h"
 
 // The current process that is running
-struct process* current_process = 0;
+struct process *current_process = 0;
 
-static struct process* processes[PEACHOS_MAX_PROCESSES] = {};
+static struct process *processes[PEACHOS_MAX_PROCESSES] = {};
 
-static void process_init(struct process* process)
+static void process_init(struct process *process)
 {
     memset(process, 0, sizeof(struct process));
 }
 
-struct process* process_current()
+struct process *process_current()
 {
     return current_process;
 }
 
-struct process* process_get(int process_id)
+struct process *process_get(int process_id)
 {
     if (process_id < 0 || process_id >= PEACHOS_MAX_PROCESSES)
     {
@@ -34,7 +34,13 @@ struct process* process_get(int process_id)
     return processes[process_id];
 }
 
-static int process_load_binary(const char* filename, struct process* process)
+int process_switch(struct process *process)
+{
+    current_process = process;
+    return 0;
+}
+
+static int process_load_binary(const char *filename, struct process *process)
 {
     int res = 0;
     int fd = fopen(filename, "r");
@@ -47,11 +53,9 @@ static int process_load_binary(const char* filename, struct process* process)
     struct file_stat stat;
     res = fstat(fd, &stat);
     if (res != PEACHOS_ALL_OK)
-    {
         goto out;
-    }
 
-    void* program_data_ptr = kzalloc(stat.filesize);
+    void *program_data_ptr = kzalloc(stat.filesize);
     if (!program_data_ptr)
     {
         res = -ENOMEM;
@@ -71,20 +75,20 @@ out:
     fclose(fd);
     return res;
 }
-static int process_load_data(const char* filename, struct process* process)
+static int process_load_data(const char *filename, struct process *process)
 {
     int res = 0;
     res = process_load_binary(filename, process);
     return res;
 }
 
-int process_map_binary(struct process* process)
+int process_map_binary(struct process *process)
 {
     int res = 0;
-    paging_map_to(process->task->page_directory, (void*) PEACHOS_PROGRAM_VIRTUAL_ADDRESS, process->ptr, paging_align_address(process->ptr + process->size), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
+    paging_map_to(process->task->page_directory, (void *)PEACHOS_PROGRAM_VIRTUAL_ADDRESS, process->ptr, paging_align_address(process->ptr + process->size), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
     return res;
 }
-int process_map_memory(struct process* process)
+int process_map_memory(struct process *process)
 {
     int res = 0;
     res = process_map_binary(process);
@@ -93,7 +97,7 @@ int process_map_memory(struct process* process)
         goto out;
     }
 
-    paging_map_to(process->task->page_directory, (void*)PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END, process->stack, paging_align_address(process->stack+PEACHOS_USER_PROGRAM_STACK_SIZE), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
+    paging_map_to(process->task->page_directory, (void *)PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END, process->stack, paging_align_address(process->stack + PEACHOS_USER_PROGRAM_STACK_SIZE), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
 out:
     return res;
 }
@@ -109,7 +113,7 @@ int process_get_free_slot()
     return -EISTKN;
 }
 
-int process_load(const char* filename, struct process** process)
+int process_load(const char *filename, struct process **process)
 {
     int res = 0;
     int process_slot = process_get_free_slot();
@@ -124,12 +128,20 @@ out:
     return res;
 }
 
-int process_load_for_slot(const char* filename, struct process** process, int process_slot)
+int process_load_switch(const char* filename, struct process** process)
+{
+    int res = process_load(filename, process);
+    if (res == PEACHOS_ALL_OK)
+        process_switch(*process);
+    return res;
+}
+
+int process_load_for_slot(const char *filename, struct process **process, int process_slot)
 {
     int res = 0;
-    struct task* task = 0;
-    struct process* _process;
-    void* program_stack_ptr = 0;
+    struct task *task = 0;
+    struct process *_process;
+    void *program_stack_ptr = 0;
 
     if (process_get(process_slot) != 0)
     {
@@ -191,7 +203,7 @@ out:
             task_free(_process->task);
         }
 
-       // Free the process data
+        // Free the process data
     }
     return res;
 }
