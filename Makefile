@@ -41,7 +41,6 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 ./build/gdt/gdt.o: ./src/gdt/gdt.c
 	i686-elf-gcc $(INCLUDES) -I./src/gdt $(FLAGS) -std=gnu99 -c ./src/gdt/gdt.c -o ./build/gdt/gdt.o
 
-
 ./build/loader/formats/elf.o: ./src/loader/formats/elf.c
 	i686-elf-gcc $(INCLUDES) -I./src/loader/formats/ $(FLAGS) -std=gnu99 -c ./src/loader/formats/elf.c -o ./build/loader/formats/elf.o
 
@@ -116,10 +115,11 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 
 
 user_programs:
+	cd ./programs/stdlib && $(MAKE) all
 	cd ./programs/blank && $(MAKE) all
 
-
 user_programs_clean:
+	cd ./programs/stdlib && $(MAKE) clean
 	cd ./programs/blank && $(MAKE) clean
 
 clean: user_programs_clean
