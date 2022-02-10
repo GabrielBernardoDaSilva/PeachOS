@@ -8,7 +8,7 @@
 #include "memory/paging/paging.h"
 #include "string/string.h"
 
-const char *elf_signature[] = {
+const char elf_signature[] = {
     0x7f,
     'E',
     'L',
@@ -72,17 +72,22 @@ struct elf32_shdr *elf_section(struct elf_header *header, int index)
     return &elf_sheader(header)[index];
 }
 
+void *elf_phdr_phys_address(struct elf_file *file, struct elf32_phdr *phdr)
+{
+    return elf_memory(file) + phdr->p_offset;
+}
+
 char *elf_str_table(struct elf_header *header)
 {
     return (char *)header + elf_section(header, header->e_shstrndx)->sh_offset;
 }
 
-void *elf_virutal_base(struct elf_file *file)
+void *elf_virtual_base(struct elf_file *file)
 {
     return file->virtual_base_address;
 }
 
-void *elf_virutal_end(struct elf_file *file)
+void *elf_virtual_end(struct elf_file *file)
 {
     return file->virtual_end_address;
 }
@@ -104,7 +109,7 @@ int elf_validate_loaded(struct elf_header *header)
             elf_valid_enconding(header) &&
             elf_has_program_header(header))
                ? PEACHOS_ALL_OK
-               : -EINVARG;
+               : -EINFORMAT;
 }
 
 int elf_process_phdr_pt_load(struct elf_file *elf_file, struct elf32_phdr *phdr)
@@ -123,7 +128,7 @@ int elf_process_phdr_pt_load(struct elf_file *elf_file, struct elf32_phdr *phdr)
     return 0;
 }
 
-int elf_process_pheaders(struct elf_file *elf_file, struct elf32_phdr *phdr)
+int elf_process_pheader(struct elf_file *elf_file, struct elf32_phdr *phdr)
 {
     int res = 0;
     switch (phdr->p_type)
@@ -135,6 +140,7 @@ int elf_process_pheaders(struct elf_file *elf_file, struct elf32_phdr *phdr)
     default:
         break;
     }
+    return res;
 }
 
 int elf_process_pheaders(struct elf_file *elf_file)
@@ -144,7 +150,7 @@ int elf_process_pheaders(struct elf_file *elf_file)
     for (int i = 0; i < header->e_phnum; i++)
     {
         struct elf32_phdr *phdr = elf_program_header(header, i);
-        res = elf_process_pheaders(elf_file, phdr);
+        res = elf_process_pheader(elf_file, phdr);
         if (res < 0)
             break;
     }
@@ -170,16 +176,16 @@ int elf_load(const char *filename, struct elf_file **file_out)
 {
     struct elf_file *elf_file = kzalloc(sizeof(struct elf_file));
     int fd = 0;
-    int res = fopen(filename, 'r');
+    int res = fopen(filename, "r");
     if (res <= 0)
         goto out;
     fd = res;
     struct file_stat stat;
     res = fstat(fd, &stat);
-    if (res <= 0)
+    if (res < 0)
         goto out;
     elf_file->elf_memory = kzalloc(stat.filesize);
-    res = fread(elf_file->elf_memory, stat.filesize, 1);
+    res = fread(elf_file->elf_memory, stat.filesize, 1, fd);
     if (res < 0)
         goto out;
     res = elf_process_loaded(elf_file);
@@ -191,10 +197,10 @@ out:
     return res;
 }
 
-void elf_close(struct elf_file* file)
+void elf_close(struct elf_file *file)
 {
     if (!file)
-        return 0;
+        return;
     kfree(file->elf_memory);
     kfree(file);
 }

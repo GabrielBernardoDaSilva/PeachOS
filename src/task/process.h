@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include "task.h"
 #include "config.h"
+#define PROCESS_FILETYPE_ELF        0x00
+#define PROCESS_FILETYPE_BIN        0x01
+typedef unsigned char PROCESS_FILETYPE;
 struct process
 {
     // The process id
@@ -16,15 +19,20 @@ struct process
     // The memory (malloc) allocations of the process
     void *allocations[PEACHOS_MAX_PROGRAM_ALLOCATIONS];
 
-    // The physical pointer to the process memory.
-    void *ptr;
+    PROCESS_FILETYPE filetype;
+    union
+    {
+        // The physical pointer to the process memory.
+        void *ptr;
+        struct elf_file* elf_file;
+    };
 
     // The physical pointer to the stack memory
     void *stack;
 
     // The size of the data pointed to by "ptr"
     uint32_t size;
-    
+
     struct keyboard_buffer
     {
         char buffer[PEACHOS_KEYBOARD_BUFFER_SIZE];
@@ -33,11 +41,11 @@ struct process
     } keyboard;
 };
 
-struct process* process_current();
-struct process* process_get(int process_id);
+struct process *process_current();
+struct process *process_get(int process_id);
 int process_load(const char *filename, struct process **process);
 int process_load_for_slot(const char *filename, struct process **process, int process_slot);
-int process_load_switch(const char* filename, struct process** process);
+int process_load_switch(const char *filename, struct process **process);
 int process_switch(struct process *process);
 
 #endif
