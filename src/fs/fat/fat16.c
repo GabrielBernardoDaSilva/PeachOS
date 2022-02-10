@@ -58,7 +58,8 @@ struct fat_header
 struct fat_h
 {
     struct fat_header primary_header;
-    union fat_h_e {
+    union fat_h_e
+    {
         struct fat_header_extended extended_header;
     } shared;
 };
@@ -90,7 +91,8 @@ struct fat_directory
 
 struct fat_item
 {
-    union {
+    union
+    {
         struct fat_directory_item *item;
         struct fat_directory *directory;
     };
@@ -122,8 +124,8 @@ int fat16_resolve(struct disk *disk);
 void *fat16_open(struct disk *disk, struct path_part *path, FILE_MODE mode);
 int fat16_read(struct disk *disk, void *descriptor, uint32_t size, uint32_t nmemb, char *out_ptr);
 int fat16_seek(void *private, uint32_t offset, FILE_SEEK_MODE seek_mode);
-int fat16_stat(struct disk* disk, void* private, struct file_stat* stat);
-int fat16_close(void* private);
+int fat16_stat(struct disk *disk, void *private, struct file_stat *stat);
+int fat16_close(void *private);
 
 struct filesystem fat16_fs =
     {
@@ -132,8 +134,7 @@ struct filesystem fat16_fs =
         .read = fat16_read,
         .seek = fat16_seek,
         .stat = fat16_stat,
-        .close = fat16_close
-    };
+        .close = fat16_close};
 
 struct filesystem *fat16_init()
 {
@@ -636,31 +637,30 @@ void *fat16_open(struct disk *disk, struct path_part *path, FILE_MODE mode)
     return descriptor;
 }
 
-static void fat16_free_file_descriptor(struct fat_file_descriptor* desc)
+static void fat16_free_file_descriptor(struct fat_file_descriptor *desc)
 {
     fat16_fat_item_free(desc->item);
     kfree(desc);
 }
 
-
-int fat16_close(void* private)
+int fat16_close(void *private)
 {
-    fat16_free_file_descriptor((struct fat_file_descriptor*) private);
+    fat16_free_file_descriptor((struct fat_file_descriptor *)private);
     return 0;
 }
 
-int fat16_stat(struct disk* disk, void* private, struct file_stat* stat)
+int fat16_stat(struct disk *disk, void *private, struct file_stat *stat)
 {
     int res = 0;
-    struct fat_file_descriptor* descriptor = (struct fat_file_descriptor*) private;
-    struct fat_item* desc_item = descriptor->item;
+    struct fat_file_descriptor *descriptor = (struct fat_file_descriptor *)private;
+    struct fat_item *desc_item = descriptor->item;
     if (desc_item->type != FAT_ITEM_TYPE_FILE)
     {
         res = -EINVARG;
         goto out;
     }
 
-    struct fat_directory_item* ritem = desc_item->item;
+    struct fat_directory_item *ritem = desc_item->item;
     stat->filesize = ritem->filesize;
     stat->flags = 0x00;
 

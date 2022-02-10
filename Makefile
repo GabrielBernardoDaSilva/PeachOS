@@ -10,7 +10,7 @@ all: ./bin/boot.bin ./bin/kernel.bin user_programs
 	sudo mount -t vfat ./bin/os.bin ./bin/mnt/d/
 	# Copy file over
 	sudo cp ./hello.txt ./bin/mnt/d
-	sudo cp ./programs/blank/blank.bin ./bin/mnt/d
+	sudo cp ./programs/blank/blank.elf ./bin/mnt/d
 	sudo umount ./bin/mnt/d
 
 ./bin/kernel.bin: $(FILES)
