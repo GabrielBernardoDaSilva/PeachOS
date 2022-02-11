@@ -6,6 +6,8 @@ global print:function
 global getkey:function
 global peachos_free:function
 global peachos_malloc:function
+global peachos_putchar:function
+
 ; void print(const char* message)
 print:
     push ebp
@@ -25,6 +27,18 @@ getkey:
     mov eax, 0x2        ;command get key
     int 0x80
 
+    pop ebp
+    ret
+
+; void peachos_putchar(char c)
+peachos_putchar:
+    push ebp
+    mov ebp, esp
+    mov eax, 0x3        ;command putchar
+    push dword[ebp+8]   ; var c
+    int 0x80
+
+    add esp, 4
     pop ebp
     ret
 

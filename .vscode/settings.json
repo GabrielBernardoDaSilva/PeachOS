@@ -11,7 +11,9 @@
         "keyboard.h": "c",
         "process.h": "c",
         "task.h": "c",
-        "classic.h": "c"
+        "classic.h": "c",
+        "stdlib.h": "c",
+        "stddef.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
