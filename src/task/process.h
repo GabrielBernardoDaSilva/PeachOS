@@ -1,6 +1,7 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 #include <stdint.h>
+#include <stdbool.h>
 #include "task.h"
 #include "config.h"
 #define PROCESS_FILETYPE_ELF        0x00
@@ -47,5 +48,7 @@ int process_load(const char *filename, struct process **process);
 int process_load_for_slot(const char *filename, struct process **process, int process_slot);
 int process_load_switch(const char *filename, struct process **process);
 int process_switch(struct process *process);
+void* process_malloc(struct process* process, size_t size);
+void process_free(struct process *process, void *ptr);
 
 #endif
