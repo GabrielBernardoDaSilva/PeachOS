@@ -6,8 +6,8 @@
 #include "memory/memory.h"
 #include "string/string.h"
 #include "memory/paging/paging.h"
-#include "idt/idt.h"
 #include "loader/formats/elfloader.h"
+#include "idt/idt.h"
 
 // The current task that is running
 struct task *current_task = 0;
@@ -126,20 +126,22 @@ void task_save_state(struct task *task, struct interrupt_frame *frame)
     task->registers.edx = frame->edx;
     task->registers.esi = frame->esi;
 }
-int copy_string_from_task(struct task *task, void *virtual, void *phys, int max)
+int copy_string_from_task(struct task* task, void* virtual, void* phys, int max)
 {
     if (max >= PAGING_PAGE_SIZE)
+    {
         return -EINVARG;
+    }
 
     int res = 0;
-    char *tmp = kzalloc(max);
+    char* tmp = kzalloc(max);
     if (!tmp)
     {
         res = -ENOMEM;
         goto out;
     }
 
-    uint32_t *task_directory = task->page_directory->directory_entry;
+    uint32_t* task_directory = task->page_directory->directory_entry;
     uint32_t old_entry = paging_get(task_directory, tmp);
     paging_map(task->page_directory, tmp, tmp, PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     paging_switch(task->page_directory);
@@ -163,7 +165,9 @@ out:
 void task_current_save_state(struct interrupt_frame *frame)
 {
     if (!task_current())
+    {
         panic("No current task to save\n");
+    }
 
     struct task *task = task_current();
     task_save_state(task, frame);
@@ -176,7 +180,7 @@ int task_page()
     return 0;
 }
 
-int task_page_task(struct task *task)
+int task_page_task(struct task* task)
 {
     user_registers();
     paging_switch(task->page_directory);
@@ -186,7 +190,9 @@ int task_page_task(struct task *task)
 void task_run_first_ever_task()
 {
     if (!current_task)
+    {
         panic("task_run_first_ever_task(): No current task exists!\n");
+    }
 
     task_switch(task_head);
     task_return(&task_head->registers);
@@ -198,11 +204,15 @@ int task_init(struct task *task, struct process *process)
     // Map the entire 4GB address space to its self
     task->page_directory = paging_new_4gb(PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     if (!task->page_directory)
+    {
         return -EIO;
+    }
 
     task->registers.ip = PEACHOS_PROGRAM_VIRTUAL_ADDRESS;
     if (process->filetype == PROCESS_FILETYPE_ELF)
+    {
         task->registers.ip = elf_header(process->elf_file)->e_entry;
+    }
 
     task->registers.ss = USER_DATA_SEGMENT;
     task->registers.cs = USER_CODE_SEGMENT;
@@ -213,19 +223,24 @@ int task_init(struct task *task, struct process *process)
     return 0;
 }
 
-void *task_get_stack_item(struct task *task, int index)
+void* task_get_stack_item(struct task* task, int index)
 {
-    void *result = 0;
+    void* result = 0;
 
-    uint32_t *sp_ptr = (uint32_t *)task->registers.esp;
+    uint32_t* sp_ptr = (uint32_t*) task->registers.esp;
 
     // Switch to the given tasks page
     task_page_task(task);
 
-    result = (void *)sp_ptr[index];
+    result = (void*) sp_ptr[index];
 
     // Switch back to the kernel page
     kernel_page();
 
     return result;
+}
+
+void* task_virtual_address_to_physical(struct task* task, void* virtual_address)
+{
+    return paging_get_physical_address(task->page_directory->directory_entry, virtual_address);
 }

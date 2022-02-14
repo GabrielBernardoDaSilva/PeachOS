@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-    print("Peachos v1.0.0\n");
+    print("PeachOS v1.0.0\n");
     while (1)
     {
         print("> ");
