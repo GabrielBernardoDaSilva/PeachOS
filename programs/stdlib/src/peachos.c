@@ -77,22 +77,22 @@ void peach_terminal_readline(char *out, int max, bool output_while_typing)
         {
             out[i - 1] = 0x00;
             // -2 because we will +1 when we go to the continue
-            i -= 1;
+            i -= 2;
         }
-        out[i] = key;
+        else
+            out[i] = key;
+        
     }
 
     out[i + 1] = 0x00;
 }
 
-
-int peachos_system_run(const char* command)
+int peachos_system_run(const char *command)
 {
     char buf[1024];
     strncpy(buf, command, sizeof(buf));
-    struct command_argument* root_command_argument = peachos_parse_command(command,sizeof(buf));
+    struct command_argument *root_command_argument = peachos_parse_command(command, sizeof(buf));
     if (!root_command_argument)
         return -1;
     return peachos_system(root_command_argument);
-
 }
