@@ -11,7 +11,7 @@ int peachos_getkeyblock()
     return val;
 }
 
-void peach_termianl_readline(char *out, int max, bool output_while_typing)
+void peach_terminal_readline(char *out, int max, bool output_while_typing)
 {
     int i = 0;
     for (i = 0; i < max - 1; i++)
@@ -31,10 +31,10 @@ void peach_termianl_readline(char *out, int max, bool output_while_typing)
         {
             out[i - 1] = 0x00;
             // -2 because we will +1 when we go to the continue
-            i -= 2;
+            i -= 1;
         }
         out[i] = key;
     }
 
-    out[i] = 0x00;
+    out[i + 1] = 0x00;
 }

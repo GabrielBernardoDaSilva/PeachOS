@@ -33,7 +33,7 @@ void terminal_putchar(int x, int y, char c, char colour)
     video_mem[(y * VGA_WIDTH) + x] = terminal_make_char(c, colour);
 }
 
-void termianl_backspace()
+void terminal_backspace()
 {
     if (terminal_row == 0 && terminal_col == 0)
         return;
@@ -58,7 +58,7 @@ void terminal_writechar(char c, char colour)
     }
     if (c == 0x08)
     {
-        termianl_backspace();
+        terminal_backspace();
         return;
     }
 
@@ -166,9 +166,9 @@ void kernel_main()
     keyboard_init();
 
     struct process *process = 0;
-    int res = process_load_switch("0:/blank.elf", &process);
+    int res = process_load_switch("0:/shell.elf", &process);
     if (res != PEACHOS_ALL_OK)
-        panic("Failed to load blank.elf\n");
+        panic("Failed to load shell.elf\n");
 
     task_run_first_ever_task();
 
