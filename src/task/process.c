@@ -502,7 +502,7 @@ static void process_unlink(struct process *process)
     }
 }
 
-int process_termiante(struct process *process)
+int process_terminate(struct process *process)
 {
     int res = 0;
 
