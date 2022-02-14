@@ -19,8 +19,7 @@
 #include "config.h"
 #include "status.h"
 
-
-uint16_t* video_mem = 0;
+uint16_t *video_mem = 0;
 uint16_t terminal_row = 0;
 uint16_t terminal_col = 0;
 
@@ -47,9 +46,9 @@ void terminal_backspace()
         terminal_col = VGA_WIDTH;
     }
 
-    terminal_col -=1;
+    terminal_col -= 1;
     terminal_writechar(' ', 15);
-    terminal_col -=1;
+    terminal_col -= 1;
 }
 
 void terminal_writechar(char c, char colour)
@@ -77,7 +76,7 @@ void terminal_writechar(char c, char colour)
 }
 void terminal_initialize()
 {
-    video_mem = (uint16_t*)(0xB8000);
+    video_mem = (uint16_t *)(0xB8000);
     terminal_row = 0;
     terminal_col = 0;
     for (int y = 0; y < VGA_HEIGHT; y++)
@@ -86,12 +85,10 @@ void terminal_initialize()
         {
             terminal_putchar(x, y, ' ', 0);
         }
-    }   
+    }
 }
 
-
-
-void print(const char* str)
+void print(const char *str)
 {
     size_t len = strlen(str);
     for (int i = 0; i < len; i++)
@@ -100,13 +97,14 @@ void print(const char* str)
     }
 }
 
+static struct paging_4gb_chunk *kernel_chunk = 0;
 
-static struct paging_4gb_chunk* kernel_chunk = 0;
-
-void panic(const char* msg)
+void panic(const char *msg)
 {
     print(msg);
-    while(1) {}
+    while (1)
+    {
+    }
 }
 
 void kernel_page()
@@ -118,12 +116,12 @@ void kernel_page()
 struct tss tss;
 struct gdt gdt_real[PEACHOS_TOTAL_GDT_SEGMENTS];
 struct gdt_structured gdt_structured[PEACHOS_TOTAL_GDT_SEGMENTS] = {
-    {.base = 0x00, .limit = 0x00, .type = 0x00},                // NULL Segment
+    {.base = 0x00, .limit = 0x00, .type = 0x00},                 // NULL Segment
     {.base = 0x00, .limit = 0xffffffff, .type = 0x9a},           // Kernel code segment
-    {.base = 0x00, .limit = 0xffffffff, .type = 0x92},            // Kernel data segment
-    {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},              // User code segment
-    {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},             // User data segment
-    {.base = (uint32_t)&tss, .limit=sizeof(tss), .type = 0xE9}      // TSS Segment
+    {.base = 0x00, .limit = 0xffffffff, .type = 0x92},           // Kernel data segment
+    {.base = 0x00, .limit = 0xffffffff, .type = 0xf8},           // User code segment
+    {.base = 0x00, .limit = 0xffffffff, .type = 0xf2},           // User data segment
+    {.base = (uint32_t)&tss, .limit = sizeof(tss), .type = 0xE9} // TSS Segment
 };
 
 void kernel_main()
@@ -157,7 +155,7 @@ void kernel_main()
 
     // Setup paging
     kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
-    
+
     // Switch to kernel paging chunk
     paging_switch(kernel_chunk);
 
@@ -169,21 +167,32 @@ void kernel_main()
 
     // Initialize all the system keyboards
     keyboard_init();
-        
-    struct process* process = 0;
-    int res = process_load_switch("0:/shell.elf", &process);
+
+    struct process *process = 0;
+    int res = process_load_switch("0:/blank.elf", &process);
     if (res != PEACHOS_ALL_OK)
     {
-        panic("Failed to load shell.elf\n");
+        panic("Failed to load blank.elf\n");
     }
-
 
     struct command_argument argument;
     strcpy(argument.argument, "Testing!");
-    argument.next = 0x00; 
-
+    argument.next = 0x00;
     process_inject_arguments(process, &argument);
+
+    res = process_load_switch("0:/blank.elf", &process);
+    if (res != PEACHOS_ALL_OK)
+    {
+        panic("Failed to load blank.elf\n");
+    }
+
+    strcpy(argument.argument, "Abc!");
+    argument.next = 0x00;
+    process_inject_arguments(process, &argument);
+
     task_run_first_ever_task();
 
-    while(1) {}
+    while (1)
+    {
+    }
 }
