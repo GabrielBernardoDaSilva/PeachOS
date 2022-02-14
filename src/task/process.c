@@ -11,21 +11,21 @@
 #include "kernel.h"
 
 // The current process that is running
-struct process* current_process = 0;
+struct process *current_process = 0;
 
-static struct process* processes[PEACHOS_MAX_PROCESSES] = {};
+static struct process *processes[PEACHOS_MAX_PROCESSES] = {};
 
-static void process_init(struct process* process)
+static void process_init(struct process *process)
 {
     memset(process, 0, sizeof(struct process));
 }
 
-struct process* process_current()
+struct process *process_current()
 {
     return current_process;
 }
 
-struct process* process_get(int process_id)
+struct process *process_get(int process_id)
 {
     if (process_id < 0 || process_id >= PEACHOS_MAX_PROCESSES)
     {
@@ -35,13 +35,13 @@ struct process* process_get(int process_id)
     return processes[process_id];
 }
 
-int process_switch(struct process* process)
+int process_switch(struct process *process)
 {
     current_process = process;
     return 0;
 }
 
-static int process_find_free_allocation_index(struct process* process)
+static int process_find_free_allocation_index(struct process *process)
 {
     int res = -ENOMEM;
     for (int i = 0; i < PEACHOS_MAX_PROGRAM_ALLOCATIONS; i++)
@@ -56,9 +56,9 @@ static int process_find_free_allocation_index(struct process* process)
     return res;
 }
 
-void* process_malloc(struct process* process, size_t size)
+void *process_malloc(struct process *process, size_t size)
 {
-    void* ptr = kzalloc(size);
+    void *ptr = kzalloc(size);
     if (!ptr)
     {
         goto out_err;
@@ -70,7 +70,7 @@ void* process_malloc(struct process* process, size_t size)
         goto out_err;
     }
 
-    int res = paging_map_to(process->task->page_directory, ptr, ptr, paging_align_address(ptr+size), PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
+    int res = paging_map_to(process->task->page_directory, ptr, ptr, paging_align_address(ptr + size), PAGING_IS_WRITEABLE | PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL);
     if (res < 0)
     {
         goto out_err;
@@ -81,14 +81,14 @@ void* process_malloc(struct process* process, size_t size)
     return ptr;
 
 out_err:
-    if(ptr)
+    if (ptr)
     {
         kfree(ptr);
     }
     return 0;
 }
 
-static bool process_is_process_pointer(struct process* process, void* ptr)
+static bool process_is_process_pointer(struct process *process, void *ptr)
 {
     for (int i = 0; i < PEACHOS_MAX_PROGRAM_ALLOCATIONS; i++)
     {
@@ -99,7 +99,7 @@ static bool process_is_process_pointer(struct process* process, void* ptr)
     return false;
 }
 
-static void process_allocation_unjoin(struct process* process, void* ptr)
+static void process_allocation_unjoin(struct process *process, void *ptr)
 {
     for (int i = 0; i < PEACHOS_MAX_PROGRAM_ALLOCATIONS; i++)
     {
@@ -111,7 +111,7 @@ static void process_allocation_unjoin(struct process* process, void* ptr)
     }
 }
 
-static struct process_allocation* process_get_allocation_by_addr(struct process* process, void* addr)
+static struct process_allocation *process_get_allocation_by_addr(struct process *process, void *addr)
 {
     for (int i = 0; i < PEACHOS_MAX_PROGRAM_ALLOCATIONS; i++)
     {
@@ -122,17 +122,17 @@ static struct process_allocation* process_get_allocation_by_addr(struct process*
     return 0;
 }
 
-void process_get_arguments(struct process* process, int* argc, char*** argv)
+void process_get_arguments(struct process *process, int *argc, char ***argv)
 {
     *argc = process->arguments.argc;
     *argv = process->arguments.argv;
 }
 
-int process_count_command_arguments(struct command_argument* root_argument)
+int process_count_command_arguments(struct command_argument *root_argument)
 {
-    struct command_argument* current = root_argument;
+    struct command_argument *current = root_argument;
     int i = 0;
-    while(current)
+    while (current)
     {
         i++;
         current = current->next;
@@ -141,11 +141,10 @@ int process_count_command_arguments(struct command_argument* root_argument)
     return i;
 }
 
-
-int process_inject_arguments(struct process* process, struct command_argument* root_argument)
+int process_inject_arguments(struct process *process, struct command_argument *root_argument)
 {
     int res = 0;
-    struct command_argument* current = root_argument;
+    struct command_argument *current = root_argument;
     int i = 0;
     int argc = process_count_command_arguments(root_argument);
     if (argc == 0)
@@ -154,17 +153,16 @@ int process_inject_arguments(struct process* process, struct command_argument* r
         goto out;
     }
 
-    char **argv = process_malloc(process, sizeof(const char*) * argc);
+    char **argv = process_malloc(process, sizeof(const char *) * argc);
     if (!argv)
     {
         res = -ENOMEM;
         goto out;
     }
 
-
-    while(current)
+    while (current)
     {
-        char* argument_str = process_malloc(process, sizeof(current->argument));
+        char *argument_str = process_malloc(process, sizeof(current->argument));
         if (!argument_str)
         {
             res = -ENOMEM;
@@ -182,17 +180,17 @@ int process_inject_arguments(struct process* process, struct command_argument* r
 out:
     return res;
 }
-void process_free(struct process* process, void* ptr)
+void process_free(struct process *process, void *ptr)
 {
     // Unlink the pages from the process for the given address
-    struct process_allocation* allocation = process_get_allocation_by_addr(process, ptr);
+    struct process_allocation *allocation = process_get_allocation_by_addr(process, ptr);
     if (!allocation)
     {
         // Oops its not our pointer.
         return;
     }
 
-    int res = paging_map_to(process->task->page_directory, allocation->ptr, allocation->ptr, paging_align_address(allocation->ptr+allocation->size), 0x00);
+    int res = paging_map_to(process->task->page_directory, allocation->ptr, allocation->ptr, paging_align_address(allocation->ptr + allocation->size), 0x00);
     if (res < 0)
     {
         return;
@@ -205,7 +203,7 @@ void process_free(struct process* process, void* ptr)
     kfree(ptr);
 }
 
-static int process_load_binary(const char* filename, struct process* process)
+static int process_load_binary(const char *filename, struct process *process)
 {
     int res = 0;
     int fd = fopen(filename, "r");
@@ -222,7 +220,7 @@ static int process_load_binary(const char* filename, struct process* process)
         goto out;
     }
 
-    void* program_data_ptr = kzalloc(stat.filesize);
+    void *program_data_ptr = kzalloc(stat.filesize);
     if (!program_data_ptr)
     {
         res = -ENOMEM;
@@ -244,10 +242,10 @@ out:
     return res;
 }
 
-static int process_load_elf(const char* filename, struct process* process)
+static int process_load_elf(const char *filename, struct process *process)
 {
     int res = 0;
-    struct elf_file* elf_file = 0;
+    struct elf_file *elf_file = 0;
     res = elf_load(filename, &elf_file);
     if (ISERR(res))
     {
@@ -259,7 +257,7 @@ static int process_load_elf(const char* filename, struct process* process)
 out:
     return res;
 }
-static int process_load_data(const char* filename, struct process* process)
+static int process_load_data(const char *filename, struct process *process)
 {
     int res = 0;
     res = process_load_elf(filename, process);
@@ -271,30 +269,30 @@ static int process_load_data(const char* filename, struct process* process)
     return res;
 }
 
-int process_map_binary(struct process* process)
+int process_map_binary(struct process *process)
 {
     int res = 0;
-    paging_map_to(process->task->page_directory, (void*) PEACHOS_PROGRAM_VIRTUAL_ADDRESS, process->ptr, paging_align_address(process->ptr + process->size), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
+    paging_map_to(process->task->page_directory, (void *)PEACHOS_PROGRAM_VIRTUAL_ADDRESS, process->ptr, paging_align_address(process->ptr + process->size), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
     return res;
 }
 
-static int process_map_elf(struct process* process)
+static int process_map_elf(struct process *process)
 {
     int res = 0;
 
-    struct elf_file* elf_file = process->elf_file;
-    struct elf_header* header = elf_header(elf_file);
-    struct elf32_phdr* phdrs = elf_pheader(header);
+    struct elf_file *elf_file = process->elf_file;
+    struct elf_header *header = elf_header(elf_file);
+    struct elf32_phdr *phdrs = elf_pheader(header);
     for (int i = 0; i < header->e_phnum; i++)
     {
-        struct elf32_phdr* phdr = &phdrs[i];
-        void* phdr_phys_address = elf_phdr_phys_address(elf_file, phdr);
+        struct elf32_phdr *phdr = &phdrs[i];
+        void *phdr_phys_address = elf_phdr_phys_address(elf_file, phdr);
         int flags = PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL;
         if (phdr->p_flags & PF_W)
         {
             flags |= PAGING_IS_WRITEABLE;
         }
-        res = paging_map_to(process->task->page_directory, paging_align_to_lower_page((void*)phdr->p_vaddr), paging_align_to_lower_page(phdr_phys_address), paging_align_address(phdr_phys_address+phdr->p_memsz), flags);
+        res = paging_map_to(process->task->page_directory, paging_align_to_lower_page((void *)phdr->p_vaddr), paging_align_to_lower_page(phdr_phys_address), paging_align_address(phdr_phys_address + phdr->p_memsz), flags);
         if (ISERR(res))
         {
             break;
@@ -302,22 +300,22 @@ static int process_map_elf(struct process* process)
     }
     return res;
 }
-int process_map_memory(struct process* process)
+int process_map_memory(struct process *process)
 {
     int res = 0;
 
-    switch(process->filetype)
+    switch (process->filetype)
     {
-        case PROCESS_FILETYPE_ELF:
-            res = process_map_elf(process);
+    case PROCESS_FILETYPE_ELF:
+        res = process_map_elf(process);
         break;
 
-        case PROCESS_FILETYPE_BINARY:
-            res = process_map_binary(process);
+    case PROCESS_FILETYPE_BINARY:
+        res = process_map_binary(process);
         break;
 
-        default:
-            panic("process_map_memory: Invalid filetype\n");
+    default:
+        panic("process_map_memory: Invalid filetype\n");
     }
 
     if (res < 0)
@@ -326,7 +324,7 @@ int process_map_memory(struct process* process)
     }
 
     // Finally map the stack
-    paging_map_to(process->task->page_directory, (void*)PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END, process->stack, paging_align_address(process->stack+PEACHOS_USER_PROGRAM_STACK_SIZE), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
+    paging_map_to(process->task->page_directory, (void *)PEACHOS_PROGRAM_VIRTUAL_STACK_ADDRESS_END, process->stack, paging_align_address(process->stack + PEACHOS_USER_PROGRAM_STACK_SIZE), PAGING_IS_PRESENT | PAGING_ACCESS_FROM_ALL | PAGING_IS_WRITEABLE);
 out:
     return res;
 }
@@ -342,7 +340,7 @@ int process_get_free_slot()
     return -EISTKN;
 }
 
-int process_load(const char* filename, struct process** process)
+int process_load(const char *filename, struct process **process)
 {
     int res = 0;
     int process_slot = process_get_free_slot();
@@ -357,7 +355,7 @@ out:
     return res;
 }
 
-int process_load_switch(const char* filename, struct process** process)
+int process_load_switch(const char *filename, struct process **process)
 {
     int res = process_load(filename, process);
     if (res == 0)
@@ -368,12 +366,12 @@ int process_load_switch(const char* filename, struct process** process)
     return res;
 }
 
-int process_load_for_slot(const char* filename, struct process** process, int process_slot)
+int process_load_for_slot(const char *filename, struct process **process, int process_slot)
 {
     int res = 0;
-    struct task* task = 0;
-    struct process* _process;
-    void* program_stack_ptr = 0;
+    struct task *task = 0;
+    struct process *_process;
+    void *program_stack_ptr = 0;
 
     if (process_get(process_slot) != 0)
     {
@@ -435,7 +433,91 @@ out:
             task_free(_process->task);
         }
 
-       // Free the process data
+        // Free the process data
     }
+    return res;
+}
+
+int process_terminate_allcoations(struct process *process)
+{
+    for (int i = 0; i < PEACHOS_MAX_PROGRAM_ALLOCATIONS; i++)
+    {
+        process_free(process, process->allocations[i].ptr);
+    }
+
+    return 0;
+}
+
+int process_free_binary_data(struct process *process)
+{
+    kfree(process->ptr);
+    return 0;
+}
+
+int process_free_elf_data(struct process *process)
+{
+    elf_close(process->elf_file);
+    return 0;
+}
+
+int process_free_program_data(struct process *process)
+{
+    int res = 0;
+    switch (process->filetype)
+    {
+    case PROCESS_FILETYPE_BINARY:
+        res = process_free_binary_data(process);
+        break;
+
+    case PROCESS_FILETYPE_ELF:
+        res = process_free_elf_data(process);
+        break;
+    default:
+        res = -EINVARG;
+        break;
+    }
+
+    return res;
+}
+
+void process_switch_to_any()
+{
+    for (int i = 0; i < PEACHOS_MAX_PROCESSES; i++)
+    {
+        if (processes[i])
+        {
+            process_switch(processes[i]);
+            return;
+        }
+    }
+    panic("No process to swtich!!\n");
+}
+
+static void process_unlink(struct process *process)
+{
+    processes[process->id] = 0x00;
+    if (current_process == process)
+    {
+        process_switch_to_any();
+    }
+}
+
+int process_termiante(struct process *process)
+{
+    int res = 0;
+
+    res = process_terminate_allcoations(process);
+
+    if (res < 0)
+        goto out;
+
+    res = process_free_program_data(process);
+    if (res < 0)
+        goto out;
+    kfree(process->stack);
+    task_free(process->task);
+    process_unlink(process);
+    print("Process was terminated!\n");
+out:
     return res;
 }
